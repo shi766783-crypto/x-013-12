@@ -1,10 +1,12 @@
 <script setup>
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
-import { normalRanges } from '../data'
-
-const props = defineProps({ records: { type: Array, default: () => [] }, type: { type: String, default: 'weight' } })
+const props = defineProps({
+  records: { type: Array, default: () => [] },
+  type: { type: String, default: 'weight' },
+  range: { type: Object, required: true },
+})
 const canvas = ref(null)
-const range = computed(() => normalRanges[props.type])
+const range = computed(() => props.range)
 
 function draw() {
   const element = canvas.value
@@ -31,7 +33,9 @@ function draw() {
   const x = (index) => props.records.length === 1 ? width / 2 : (index / (props.records.length - 1)) * (width - 24) + 12
   const y = (value) => height - ((value - min) / (max - min)) * (height - 24) - 12
   ctx.fillStyle = '#f0f7dd'
-  ctx.fillRect(0, Math.max(0, y(range.value.max)), width, Math.max(0, y(range.value.min) - y(range.value.max)))
+  const bandTop = Math.max(0, Math.min(height, y(range.value.max)))
+  const bandBottom = Math.max(0, Math.min(height, y(range.value.min)))
+  ctx.fillRect(0, bandTop, width, Math.max(0, bandBottom - bandTop))
   ctx.beginPath()
   props.records.forEach((item, index) => index ? ctx.lineTo(x(index), y(item.value)) : ctx.moveTo(x(index), y(item.value)))
   ctx.strokeStyle = '#b5cf3e'
@@ -45,7 +49,7 @@ function draw() {
   ctx.fillText(`${range.value.min}`, 6, Math.min(height - 4, y(range.value.min) + 13))
 }
 
-watch(() => [props.records, props.type], () => nextTick(draw), { deep: true })
+watch(() => [props.records, props.type, props.range], () => nextTick(draw), { deep: true })
 onMounted(() => { draw(); window.addEventListener('resize', draw) })
 </script>
 

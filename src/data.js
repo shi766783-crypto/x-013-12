@@ -7,6 +7,29 @@ export const normalRanges = {
   heartRate: { min: 60, max: 140, unit: 'bpm', label: '心率' },
 }
 
+export const metricTypes = ['weight', 'temperature', 'heartRate']
+
+export function hasCustomRange(pet, type) {
+  const customRange = pet?.referenceRanges?.[type]
+  const min = Number(customRange?.min)
+  const max = Number(customRange?.max)
+  return Boolean(customRange) && Number.isFinite(min) && Number.isFinite(max) && min < max
+}
+
+export function getMetricRange(pet, type) {
+  const customRange = pet?.referenceRanges?.[type]
+  const min = Number(customRange?.min)
+  const max = Number(customRange?.max)
+  if (hasCustomRange(pet, type)) return { ...normalRanges[type], min, max }
+  return normalRanges[type]
+}
+
+export function isValueInRange(value, pet, type) {
+  const range = getMetricRange(pet, type)
+  const numberValue = Number(value)
+  return Number.isFinite(numberValue) && numberValue >= range.min && numberValue <= range.max
+}
+
 export const achievementDefinitions = [
   { id: 'first-pet', icon: 'paw', title: '初次养宠', desc: '完成第一个宠物档案', condition: (s) => s.pets.length >= 1 },
   { id: 'health-keeper', icon: 'heart', title: '健康记录家', desc: '累计记录 5 次健康指标', condition: (s) => s.healthRecords.length >= 5 },
